@@ -1,46 +1,58 @@
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.*;
+import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.interactions.Actions;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
 
-import java.time.Duration;
+import java.io.File;
+import java.nio.file.Files;
 import java.util.List;
 
-public class DragAndDrop {
-    WebDriver driver = new ChromeDriver();
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@Slf4j
+public class DragAndDropTest {
+    WebDriver driver = new FirefoxDriver();
     Actions actions = new Actions(driver);
-    WebDriverWait wait;
+
 
     @Test
-    void drag() {
+    void elements_from_drag_source_should_be_moved_to_drop_target() {
         driver.get("https://demo.aspnetawesome.com/DragAndDropDemo");
-        List<WebElement> dragSources = driver.findElements(By.cssSelector(".dropZone .ditem"));
-        WebElement dropTarget = driver.findElement(By.cssSelector(".dropZone:nth-child(2)"));
-        int xOffset = 0;
-        int yOffset = 100;
+        List<WebElement> dragElements = driver.findElements(By.cssSelector(".dropZone .ditem"));
+        WebElement dropTarget = driver.findElement(By.cssSelector("main#maincont > div:nth-of-type(2) > div:nth-of-type(2)"));
 
-        for (WebElement dragSource : dragSources) {
-            actions.clickAndHold(dragSource)
-                    //.moveToElement(dropTarget)
-                    .moveByOffset(xOffset,yOffset)
+        int xOffset = 10;
+        int yOffset = 0;
+
+        for (WebElement dragElement : dragElements) {
+            actions.clickAndHold(dragElement)
+                    .moveByOffset(xOffset, yOffset)
+                    .moveToElement(dropTarget)
                     .release()
                     .build()
                     .perform();
         }
 
+        List<WebElement> itemsInSecondDropZone = dropTarget.findElements(By.cssSelector(".ditem"));
+        assertEquals(3, itemsInSecondDropZone.size(),"Number of ditem divs in the second dropZone should be 3");
+        takeScreenshot(driver, "dragAndDropScreenshot");
     }
 
-    private static boolean isElementVisible(WebDriver driver, WebElement element) {
+    private void takeScreenshot(WebDriver driver, String fileName) {
         try {
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(1));
-            wait.until(ExpectedConditions.visibilityOf(element));
-            return true;
+            TakesScreenshot scrShot = ((TakesScreenshot) driver);
+            File srcFile = scrShot.getScreenshotAs(OutputType.FILE);
+            File destDirectory = new File("target/screenshots");
+            if (!destDirectory.exists()) {
+                destDirectory.mkdirs();
+            }
+            String destFilePath = destDirectory + "/" + fileName + "_" + System.currentTimeMillis() + ".png";
+            File destFile = new File(destFilePath);
+            Files.copy(srcFile.toPath(), destFile.toPath());
+            log.info("Screenshot saved at: " + destFile.getAbsolutePath());
         } catch (Exception e) {
-            return false;
+            log.error("Error taking screenshot: " + e.getMessage());
         }
     }
 }
