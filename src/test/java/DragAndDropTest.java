@@ -1,4 +1,6 @@
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.*;
 import org.openqa.selenium.firefox.FirefoxDriver;
@@ -12,8 +14,19 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
 public class DragAndDropTest {
-    WebDriver driver = new FirefoxDriver();
+    protected static WebDriver driver;
     Actions actions = new Actions(driver);
+
+    @BeforeAll
+    public static void setUp() {
+        driver = new FirefoxDriver();
+        driver.manage().window().maximize();
+    }
+
+    @AfterAll
+    public static void tearDown() {
+        driver.quit();
+    }
 
 
     @Test
@@ -35,7 +48,7 @@ public class DragAndDropTest {
         }
 
         List<WebElement> itemsInSecondDropZone = dropTarget.findElements(By.cssSelector(".ditem"));
-        assertEquals(3, itemsInSecondDropZone.size(),"Number of ditem divs in the second dropZone should be 3");
+        assertEquals(3, itemsInSecondDropZone.size(), "Number of ditem divs in the second dropZone should be 3");
         takeScreenshot(driver, "dragAndDropScreenshot");
     }
 
